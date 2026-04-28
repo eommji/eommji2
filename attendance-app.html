@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D2R 출석 관리 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .navbar h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .navbar p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        .status-active {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .status-restricted {
+            background: #fed7aa;
+            color: #92400e;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .status-removed {
+            background: #fee2e2;
+            color: #7f1d1d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .attendance-attended {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .attendance-noshow {
+            background: #fee2e2;
+            color: #7f1d1d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+            flex: 1;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+        }
+
+        .attendance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .attendance-card {
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .attendance-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .attendance-card.attended {
+            background: #d1fae5;
+            border-color: #10b981;
+        }
+
+        .attendance-card.noshow {
+            background: #fee2e2;
+            border-color: #ef4444;
+        }
+
+        .attendance-card .name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .attendance-card .status {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            flex: 1;
+        }
+
+        .ranking {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .ranking-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ranking-item .rank {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 18px;
+            width: 30px;
+            text-align: center;
+        }
+
+        .ranking-item .info {
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .ranking-item .name {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .ranking-item .count {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .ranking-item .score {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state p {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🏃 D2R 출석 관리 시스템</h1>
+        <p>디투런 크루원 출석 기록 및 관리</p>
+    </div>
+
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('members')">👥 크루원 관리</button>
+            <button class="tab-btn" onclick="switchTab('schedules')">📅 일정 관리</button>
+            <button class="tab-btn" onclick="switchTab('attendance')">📋 출석 기록</button>
+            <button class="tab-btn" onclick="switchTab('statistics')">📊 통계</button>
+        </div>
+
+        <!-- Members Tab -->
+        <div id="members" class="tab-content active">
+            <div class="section">
+                <h2>👥 크루원 관리</h2>
+                <div class="search-box">
+                    <input type="text" id="memberSearch" placeholder="닉네임이나 이름으로 검색..." onkeyup="filterMembers()">
+                    <button class="btn btn-primary" onclick="openAddMemberModal()">+ 새 크루원 추가</button>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3 id="totalMembers">0</h3>
+                        <p>총 크루원</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="activeMembers">0</h3>
+                        <p>활동 중</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="restrictedMembers">0</h3>
+                        <p>제한됨</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3 id="removedMembers">0</h3>
+                        <p>제외됨</p>
+                    </div>
+                </div>
+
+                <table id="membersTable">
+                    <thead>
+                        <tr>
+                            <th>닉네임</th>
+                            <th>이름</th>
+                            <th>상태</th>
+                            <th>가입일</th>
+                            <th>참석횟수</th>
+                            <th>조작</th>
+                        </tr>
+                    </thead>
+                    <tbody id="membersList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Schedules Tab -->
+        <div id="schedules" class="tab-content">
+            <div class="section">
+                <h2>📅 일정 관리</h2>
+                <div class="input-group">
+                    <input type="date" id="scheduleDate">
+                    <select id="scheduleType">
+                        <option value="">-- 일정 타입 선택 --</option>
+                        <option value="running">러닝</option>
+                        <option value="competition">대회</option>
+                        <option value="non_running">비러닝</option>
+                    </select>
+                    <input type="text" id="scheduleLocation" placeholder="장소">
+                    <button class="btn btn-primary" onclick="addSchedule()">+ 일정 추가</button>
+                </div>
+
+                <table id="schedulesTable">
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>시간</th>
+                            <th>타입</th>
+                            <th>장소</th>
+                            <th>참가자</th>
+                            <th>조작</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedulesList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Attendance Tab -->
+        <div id="attendance" class="tab-content">
+            <div class="section">
+                <h2>📋 출석 기록</h2>
+
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; margin-bottom: 10px; display: block;">일정 선택:</label>
+                    <select id="attendanceSchedule" onchange="loadAttendanceForSchedule()" style="width: 100%; max-width: 300px;">
+                        <option value="">-- 일정을 선택하세요 --</option>
+                    </select>
+                </div>
+
+                <div id="attendanceSection" style="display: none;">
+                    <div class="stats">
+                        <div class="stat-card">
+                            <h3 id="totalParticipants">0</h3>
+                            <p>총 참가자</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="attendedCount">0</h3>
+                            <p>참석</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="noshowCount">0</h3>
+                            <p>노쇼</p>
+                        </div>
+                    </div>
+
+                    <div class="attendance-grid" id="attendanceGrid"></div>
+                </div>
+
+                <div id="noScheduleSelected" class="empty-state">
+                    <p>위에서 일정을 선택하세요</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Tab -->
+        <div id="statistics" class="tab-content">
+            <div class="section">
+                <h2>📊 출석 랭킹</h2>
+                <div class="ranking" id="rankingList"></div>
+            </div>
+
+            <div class="section">
+                <h2>📈 개인 통계</h2>
+                <div class="search-box">
+                    <select id="memberStatisticSelect" onchange="showMemberStatistics()" style="flex: 1;">
+                        <option value="">-- 크루원을 선택하세요 --</option>
+                    </select>
+                </div>
+                <div id="memberStatisticsDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for adding member -->
+    <div id="addMemberModal" class="modal">
+        <div class="modal-content">
+            <h2>새 크루원 추가</h2>
+            <div class="form-group">
+                <label>이름</label>
+                <input type="text" id="newMemberName">
+            </div>
+            <div class="form-group">
+                <label>닉네임</label>
+                <input type="text" id="newMemberNickname">
+            </div>
+            <div class="form-group">
+                <label>가입일</label>
+                <input type="date" id="newMemberDate">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="saveMember()">저장</button>
+                <button class="btn btn-danger" onclick="closeAddMemberModal()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample Data from members.csv
+        const membersData = [
+            {id: 1, nickname: '바람', name: '김철수', status: 'active', joinedAt: '2024-01-15', attendanceCount: 18},
+            {id: 2, nickname: '달빛', name: '이영지', status: 'active', joinedAt: '2024-02-03', attendanceCount: 16},
+            {id: 3, nickname: '순풍', name: '박준호', status: 'active', joinedAt: '2024-01-22', attendanceCount: 19},
+            {id: 4, nickname: '번개', name: '최민준', status: 'active', joinedAt: '2024-03-10', attendanceCount: 12},
+            {id: 5, nickname: '별', name: '정수현', status: 'active', joinedAt: '2024-02-18', attendanceCount: 14},
+            {id: 6, nickname: '해', name: '조은정', status: 'active', joinedAt: '2024-01-08', attendanceCount: 21},
+            {id: 7, nickname: '달', name: '윤지훈', status: 'active', joinedAt: '2024-04-01', attendanceCount: 8},
+            {id: 8, nickname: '구름', name: '한수진', status: 'active', joinedAt: '2024-02-25', attendanceCount: 13},
+            {id: 9, nickname: '빛', name: '이다은', status: 'active', joinedAt: '2024-03-05', attendanceCount: 11},
+            {id: 10, nickname: '신발', name: '박성호', status: 'active', joinedAt: '2024-01-30', attendanceCount: 17},
+            {id: 11, nickname: '토끼', name: '임혜원', status: 'active', joinedAt: '2024-02-12', attendanceCount: 15},
+            {id: 12, nickname: '매', name: '김준영', status: 'active', joinedAt: '2024-03-18', attendanceCount: 10},
+            {id: 13, nickname: '노을', name: '이은미', status: 'active', joinedAt: '2024-01-20', attendanceCount: 20},
+            {id: 14, nickname: '산', name: '조성민', status: 'active', joinedAt: '2024-02-08', attendanceCount: 14},
+            {id: 15, nickname: '강', name: '박미라', status: 'active', joinedAt: '2024-03-22', attendanceCount: 9},
+            {id: 16, nickname: '불', name: '최준호', status: 'active', joinedAt: '2024-01-25', attendanceCount: 16},
+            {id: 17, nickname: '봄', name: '정예진', status: 'active', joinedAt: '2024-02-28', attendanceCount: 12},
+            {id: 18, nickname: '여름', name: '한동욱', status: 'active', joinedAt: '2024-03-12', attendanceCount: 11},
+            {id: 19, nickname: '가을', name: '이지호', status: 'active', joinedAt: '2024-01-18', attendanceCount: 19},
+            {id: 20, nickname: '겨울', name: '윤소영', status: 'active', joinedAt: '2024-02-05', attendanceCount: 13},
+            {id: 21, nickname: '달리기', name: '박준영', status: 'active', joinedAt: '2024-03-08', attendanceCount: 10},
+            {id: 22, nickname: '속도', name: '김영준', status: 'active', joinedAt: '2024-01-28', attendanceCount: 15},
+            {id: 23, nickname: '기쁨', name: '정혜선', status: 'active', joinedAt: '2024-02-20', attendanceCount: 17},
+            {id: 24, nickname: '희망', name: '이준석', status: 'active', joinedAt: '2024-03-02', attendanceCount: 9},
+            {id: 25, nickname: '자유', name: '조윤정', status: 'active', joinedAt: '2024-01-12', attendanceCount: 18},
+            {id: 26, nickname: '에너지', name: '박소희', status: 'active', joinedAt: '2024-02-14', attendanceCount: 14},
+            {id: 27, nickname: '웃음', name: '한재호', status: 'active', joinedAt: '2024-03-25', attendanceCount: 8},
+            {id: 28, nickname: '도전', name: '이보람', status: 'active', joinedAt: '2024-02-01', attendanceCount: 16},
+            {id: 29, nickname: '함께', name: '윤석환', status: 'active', joinedAt: '2024-03-15', attendanceCount: 11},
+            {id: 30, nickname: '꿈', name: '김나영', status: 'active', joinedAt: '2024-01-05', attendanceCount: 22}
+        ];
+
+        let schedules = [
+            {id: 1, date: '2026-04-28', time: '07:00', type: 'running', location: '한강공원', participants: []},
+            {id: 2, date: '2026-04-30', time: '07:00', type: 'running', location: '한강공원', participants: []},
+            {id: 3, date: '2026-05-03', time: '09:00', type: 'competition', location: '올림픽공원', participants: []}
+        ];
+
+        let attendanceRecords = {};
+
+        // Initialize
+        window.onload = function() {
+            renderMembers();
+            renderSchedules();
+            renderStatistics();
+            loadSchedulesForAttendance();
+        };
+
+        function switchTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function renderMembers(filter = '') {
+            const list = document.getElementById('membersList');
+            list.innerHTML = '';
+
+            let filtered = membersData.filter(m =>
+                m.nickname.toLowerCase().includes(filter.toLowerCase()) ||
+                m.name.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            filtered.forEach(member => {
+                const row = document.createElement('tr');
+                const statusClass = `status-${member.status}`;
+                const statusText = {active: '활동중', restricted: '제한됨', removed: '제외됨'}[member.status];
+
+                row.innerHTML = `
+                    <td><strong>${member.nickname}</strong></td>
+                    <td>${member.name}</td>
+                    <td><span class="${statusClass}">${statusText}</span></td>
+                    <td>${member.joinedAt}</td>
+                    <td>${member.attendanceCount}회</td>
+                    <td>
+                        <button class="btn btn-small btn-primary" onclick="editMember(${member.id})">수정</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteMember(${member.id})">삭제</button>
+                    </td>
+                `;
+                list.appendChild(row);
+            });
+
+            updateMemberStats();
+        }
+
+        function filterMembers() {
+            const search = document.getElementById('memberSearch').value;
+            renderMembers(search);
+        }
+
+        function updateMemberStats() {
+            const active = membersData.filter(m => m.status === 'active').length;
+            const restricted = membersData.filter(m => m.status === 'restricted').length;
+            const removed = membersData.filter(m => m.status === 'removed').length;
+
+            document.getElementById('totalMembers').textContent = membersData.length;
+            document.getElementById('activeMembers').textContent = active;
+            document.getElementById('restrictedMembers').textContent = restricted;
+            document.getElementById('removedMembers').textContent = removed;
+        }
+
+        function openAddMemberModal() {
+            document.getElementById('addMemberModal').classList.add('show');
+            document.getElementById('newMemberDate').valueAsDate = new Date();
+        }
+
+        function closeAddMemberModal() {
+            document.getElementById('addMemberModal').classList.remove('show');
+        }
+
+        function saveMember() {
+            const name = document.getElementById('newMemberName').value;
+            const nickname = document.getElementById('newMemberNickname').value;
+            const date = document.getElementById('newMemberDate').value;
+
+            if (!name || !nickname || !date) {
+                alert('모든 필드를 입력하세요');
+                return;
+            }
+
+            membersData.push({
+                id: Math.max(...membersData.map(m => m.id)) + 1,
+                nickname: nickname,
+                name: name,
+                status: 'active',
+                joinedAt: date,
+                attendanceCount: 0
+            });
+
+            closeAddMemberModal();
+            renderMembers();
+            document.getElementById('newMemberName').value = '';
+            document.getElementById('newMemberNickname').value = '';
+            document.getElementById('newMemberDate').value = '';
+        }
+
+        function editMember(id) {
+            alert('수정 기능은 Phase 2에서 구현됩니다');
+        }
+
+        function deleteMember(id) {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                const index = membersData.findIndex(m => m.id === id);
+                if (index > -1) {
+                    membersData.splice(index, 1);
+                    renderMembers();
+                }
+            }
+        }
+
+        function renderSchedules() {
+            const list = document.getElementById('schedulesList');
+            list.innerHTML = '';
+
+            schedules.forEach(schedule => {
+                const row = document.createElement('tr');
+                const typeText = {running: '러닝', competition: '대회', non_running: '비러닝'}[schedule.type];
+
+                row.innerHTML = `
+                    <td><strong>${schedule.date}</strong></td>
+                    <td>${schedule.time}</td>
+                    <td>${typeText}</td>
+                    <td>${schedule.location}</td>
+                    <td>${schedule.participants.length}명</td>
+                    <td>
+                        <button class="btn btn-small btn-primary" onclick="editSchedule(${schedule.id})">수정</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteSchedule(${schedule.id})">삭제</button>
+                    </td>
+                `;
+                list.appendChild(row);
+            });
+        }
+
+        function addSchedule() {
+            const date = document.getElementById('scheduleDate').value;
+            const type = document.getElementById('scheduleType').value;
+            const location = document.getElementById('scheduleLocation').value;
+
+            if (!date || !type || !location) {
+                alert('모든 필드를 입력하세요');
+                return;
+            }
+
+            schedules.push({
+                id: Math.max(...schedules.map(s => s.id), 0) + 1,
+                date: date,
+                time: '07:00',
+                type: type,
+                location: location,
+                participants: []
+            });
+
+            document.getElementById('scheduleDate').value = '';
+            document.getElementById('scheduleType').value = '';
+            document.getElementById('scheduleLocation').value = '';
+
+            renderSchedules();
+            loadSchedulesForAttendance();
+        }
+
+        function editSchedule(id) {
+            alert('수정 기능은 Phase 2에서 구현됩니다');
+        }
+
+        function deleteSchedule(id) {
+            if (confirm('정말 삭제하시겠습니까?')) {
+                const index = schedules.findIndex(s => s.id === id);
+                if (index > -1) {
+                    schedules.splice(index, 1);
+                    renderSchedules();
+                    loadSchedulesForAttendance();
+                }
+            }
+        }
+
+        function loadSchedulesForAttendance() {
+            const select = document.getElementById('attendanceSchedule');
+            select.innerHTML = '<option value="">-- 일정을 선택하세요 --</option>';
+
+            schedules.forEach(schedule => {
+                const option = document.createElement('option');
+                option.value = schedule.id;
+                const typeText = {running: '러닝', competition: '대회', non_running: '비러닝'}[schedule.type];
+                option.textContent = `${schedule.date} - ${typeText} (${schedule.location})`;
+                select.appendChild(option);
+            });
+        }
+
+        function loadAttendanceForSchedule() {
+            const scheduleId = document.getElementById('attendanceSchedule').value;
+            const schedule = schedules.find(s => s.id == scheduleId);
+
+            if (!schedule) {
+                document.getElementById('attendanceSection').style.display = 'none';
+                document.getElementById('noScheduleSelected').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('attendanceSection').style.display = 'block';
+            document.getElementById('noScheduleSelected').style.display = 'none';
+
+            const grid = document.getElementById('attendanceGrid');
+            grid.innerHTML = '';
+
+            membersData.forEach(member => {
+                const key = `${scheduleId}-${member.id}`;
+                const attendance = attendanceRecords[key] || {status: null};
+
+                const card = document.createElement('div');
+                card.className = `attendance-card ${attendance.status || ''}`;
+                card.innerHTML = `
+                    <div class="name">${member.nickname}</div>
+                    <div class="status">${member.name}</div>
+                `;
+                card.onclick = () => toggleAttendance(scheduleId, member.id, card);
+                grid.appendChild(card);
+            });
+
+            updateAttendanceStats(scheduleId);
+        }
+
+        function toggleAttendance(scheduleId, memberId, card) {
+            const key = `${scheduleId}-${memberId}`;
+            const current = attendanceRecords[key]?.status;
+
+            let next = null;
+            if (current === null) next = 'attended';
+            else if (current === 'attended') next = 'noshow';
+            else if (current === 'noshow') next = null;
+
+            attendanceRecords[key] = {status: next};
+
+            card.classList.remove('attended', 'noshow');
+            if (next) card.classList.add(next);
+
+            updateAttendanceStats(scheduleId);
+        }
+
+        function updateAttendanceStats(scheduleId) {
+            let attended = 0;
+            let noshow = 0;
+
+            membersData.forEach(member => {
+                const key = `${scheduleId}-${member.id}`;
+                const status = attendanceRecords[key]?.status;
+                if (status === 'attended') attended++;
+                if (status === 'noshow') noshow++;
+            });
+
+            document.getElementById('totalParticipants').textContent = membersData.length;
+            document.getElementById('attendedCount').textContent = attended;
+            document.getElementById('noshowCount').textContent = noshow;
+        }
+
+        function renderStatistics() {
+            const ranking = document.getElementById('rankingList');
+            ranking.innerHTML = '';
+
+            const sorted = [...membersData].sort((a, b) => b.attendanceCount - a.attendanceCount);
+
+            sorted.forEach((member, index) => {
+                const item = document.createElement('div');
+                item.className = 'ranking-item';
+                item.innerHTML = `
+                    <div class="rank">#${index + 1}</div>
+                    <div class="info">
+                        <div class="name">${member.nickname}</div>
+                        <div class="count">${member.name}</div>
+                    </div>
+                    <div class="score">${member.attendanceCount}</div>
+                `;
+                ranking.appendChild(item);
+            });
+
+            const select = document.getElementById('memberStatisticSelect');
+            select.innerHTML = '<option value="">-- 크루원을 선택하세요 --</option>';
+            membersData.forEach(member => {
+                const option = document.createElement('option');
+                option.value = member.id;
+                option.textContent = `${member.nickname} (${member.name})`;
+                select.appendChild(option);
+            });
+        }
+
+        function showMemberStatistics() {
+            const memberId = document.getElementById('memberStatisticSelect').value;
+            const details = document.getElementById('memberStatisticsDetails');
+
+            if (!memberId) {
+                details.innerHTML = '';
+                return;
+            }
+
+            const member = membersData.find(m => m.id == memberId);
+            if (!member) return;
+
+            details.innerHTML = `
+                <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 28px; font-weight: bold; color: #667eea;">${member.attendanceCount}</div>
+                            <div style="color: #666; font-size: 13px;">총 참석</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 28px; font-weight: bold; color: #10b981;">0</div>
+                            <div style="color: #666; font-size: 13px;">노쇼</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 28px; font-weight: bold; color: #667eea;">0%</div>
+                            <div style="color: #666; font-size: 13px;">결석률</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">${member.joinedAt}</div>
+                            <div style="color: #666; font-size: 13px;">가입일</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
