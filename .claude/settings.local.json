@@ -1,0 +1,52 @@
+{
+  "enabledMcpjsonServers": [
+    "supabase"
+  ],
+  "enableAllProjectMcpServers": true,
+  "permissions": {
+    "allow": [
+      "Bash(pytest*)",
+      "Bash(ruff*)",
+      "Bash(poetry*)",
+      "Bash(alembic*)",
+      "Bash(docker-compose*)",
+      "Bash(docker compose*)",
+      "Bash(npm run*)",
+      "Bash(npm install*)",
+      "Bash(npx tsc*)",
+      "Bash(npx eslint*)",
+      "Bash(npx next*)",
+      "Bash(uvicorn*)",
+      "Bash(python scripts/*)",
+      "Bash(python -m pytest*)",
+      "Bash(git status)",
+      "Bash(git log*)",
+      "Bash(git diff*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(python -c \"import sys,json; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))\" 2>/dev/null); case \"$f\" in *.py) (command -v ruff >/dev/null 2>&1 && ruff format \"$f\" 2>/dev/null && ruff check --fix --select I \"$f\" 2>/dev/null) || true;; *.ts|*.tsx) (cd /c/eommji2/d2r-attendance/frontend && npx eslint --fix \"$f\" 2>/dev/null) || true;; esac; exit 0",
+            "timeout": 30,
+            "statusMessage": "파일 린팅 중..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"Claude 작업 완료\"}'"
+          }
+        ]
+      }
+    ]
+  }
+}
