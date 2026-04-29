@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **D2R Attendance Management System** — A system to manage running crew member attendance, automate operational rules, and provide statistics/analytics.
 
-**Status**: Early planning phase. Architecture and tech stack not yet finalized.
+**Status**: 구현 진행 중. Phase 1–3 완료, Phase 4·8 부분 완료.
 
 ## Core Features
 
@@ -80,16 +80,43 @@ Total estimated time: ~18-19 weeks
 - **No-show policy**: 2 or more no-shows trigger automatic member removal from the crew
 - **Regular schedule**: Monday and Thursday are automatic regular run days (should be auto-generated)
 
-## Architecture Decisions Pending
+## Tech Stack (확정)
 
-The following decisions remain unspecified and should be made during Phase 1:
+Phase 1에서 확정된 기술 스택:
 
-- **Backend Framework**: Node.js, Python, Java, Go, etc.
-- **Frontend Framework**: React, Vue, Next.js, etc.
-- **Database**: PostgreSQL, MongoDB, MySQL, etc.
-- **API Style**: RESTful, GraphQL, or hybrid
-- **Authentication**: JWT, OAuth2, sessions, etc.
-- **Deployment**: Docker, cloud platforms, on-premises
+| 영역 | 기술 |
+|------|------|
+| **Backend** | Python 3.12 + FastAPI 0.111+ |
+| **Frontend** | Next.js 14 (TypeScript) + Tailwind CSS |
+| **Database** | SQLite (개발) / PostgreSQL 16 (운영) |
+| **ORM** | SQLAlchemy 2.0 async + asyncpg |
+| **마이그레이션** | Alembic |
+| **인증** | JWT |
+| **테스트** | pytest + pytest-asyncio |
+| **배포** | Docker Compose |
+| **API 스타일** | RESTful |
+
+## Project Structure
+
+```
+d2r-attendance/
+├── backend/
+│   ├── app/
+│   │   ├── models/        # SQLAlchemy ORM (member, schedule, attendance, rule_log)
+│   │   ├── routers/       # FastAPI 라우터 (members, schedules, attendance, auth)
+│   │   ├── schemas/       # Pydantic 스키마
+│   │   ├── auth.py        # JWT 인증
+│   │   ├── database.py    # DB 연결 (async SQLAlchemy)
+│   │   └── main.py
+│   ├── alembic/           # DB 마이그레이션
+│   ├── scripts/           # 시드 스크립트 (seed_members.py)
+│   └── tests/             # pytest 테스트
+└── frontend/
+    ├── app/               # Next.js App Router
+    │   └── page.tsx       # 메인 대시보드 (출석표)
+    └── lib/
+        └── api.ts         # API 클라이언트 래퍼
+```
 
 ## Development Approach
 
@@ -107,6 +134,51 @@ The following decisions remain unspecified and should be made during Phase 1:
 
 ## Current Artifacts
 
-- `d2r-attendance-system.md`: Original specification document with detailed requirements
-- `IMPLEMENTATION_PLAN.md`: 12-phase implementation roadmap with detailed task breakdowns
-- `members.csv`: Sample member data for reference (23 crew members with various attendance records)
+- `d2r-attendance-system.md`: 기획서 — 기능 요구사항, 데이터 구조, 기술 스택, 구현 현황
+- `IMPLEMENTATION_PLAN.md`: 12페이즈 구현 계획서 (상세 태스크 및 완료 상태)
+- `d2r-attendance/`: 실제 구현 코드 (backend + frontend)
+- `members.csv`: 샘플 크루원 데이터 (23명)
+
+## Development Commands
+
+```bash
+# 전체 스택 실행 (Docker)
+cd d2r-attendance
+docker-compose up
+
+# 백엔드만 개발 실행 (SQLite, Docker 없이)
+cd d2r-attendance/backend
+DATABASE_URL=sqlite+aiosqlite:///./d2r_dev.db uvicorn app.main:app --reload
+
+# 프론트엔드 개발 실행
+cd d2r-attendance/frontend
+npm run dev
+
+# 테스트 실행
+cd d2r-attendance/backend
+pytest -v                          # 전체
+pytest tests/test_members.py -v   # 특정 파일
+
+# DB 마이그레이션
+cd d2r-attendance/backend
+alembic upgrade head               # 최신으로
+alembic revision --autogenerate -m "설명"  # 새 마이그레이션 생성
+
+# 시드 데이터 (크루원 23명)
+python scripts/seed_members.py
+
+# 코드 품질 (ruff — dev 의존성)
+ruff format app/                   # 포매팅
+ruff check --fix app/              # 린팅 자동 수정
+
+# TypeScript 타입 체크
+cd d2r-attendance/frontend
+npx tsc --noEmit
+```
+
+## Configured Automation (.claude/settings.local.json)
+
+- **PostToolUse hook**: `.py` 파일 편집 시 ruff format + ruff check --fix 자동 실행
+- **Stop hook**: 작업 완료 시 알림 표시
+- **Permissions**: pytest, ruff, poetry, alembic, docker-compose, npm, npx tsc/eslint 자동 허용
+- **MCP**: Supabase (`agljjkqixldylkfkpabi` 프로젝트) 연결됨
